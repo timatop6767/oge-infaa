@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ОГЭ Информатика — Микро-тренажер</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; padding: 16px; }
+    .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 16px; }
+    
+    /* Шапка со статистикой */
+    .header { display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 12px 16px; border-radius: 16px; }
+    .logo { font-weight: 800; font-size: 18px; color: var(--accent); }
+    .stats { display: flex; gap: 12px; font-weight: 700; font-size: 14px; }
+    .badge { background: rgba(255,255,255,0.08); padding: 6px 10px; border-radius: 10px; }
+
+    /* Карточки */
+    .card { background: var(--card); padding: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    h2 { font-size: 20px; margin-bottom: 8px; }
+    p { color: var(--muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+
+    /* Меню выбора заданий */
+    .topic-btn { width: 100%; text-align: left; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 14px 16px; border-radius: 14px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+    .topic-btn:hover { background: rgba(59, 130, 246, 0.15); border-color: var(--accent); }
+    .topic-tag { font-size: 12px; background: var(--accent); padding: 3px 8px; border-radius: 8px; font-weight: 600; }
+
+    /* Экран теста */
+    .progress-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.3s; }
+    .task-num { font-size: 12px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+    .question-text { font-size: 16px; color: var(--text); line-height: 1.5; margin-bottom: 18px; white-space: pre-line; }
+    
+    /* Варианты ответа */
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .opt-btn { background: rgba(255,255,255,0.06); border: 2px solid transparent; color: var(--text); padding: 14px; border-radius: 12px; font-size: 15px; text-align: left; cursor: pointer; transition: 0.2s; font-weight: 500; }
+    .opt-btn:hover:not(:disabled) { background: rgba(255,255,255,0.12); }
+    .opt-btn.correct { border-color: var(--success); background: rgba(16, 185, 129, 0.2); }
+    .opt-btn.wrong { border-color: var(--error); background: rgba(239, 68, 68, 0.2); }
+
+    /* Объяснение */
+    .explanation { margin-top: 16px; padding: 12px; border-radius: 12px; background: rgba(59, 130, 246, 0.15); border-left: 4px solid var(--accent); font-size: 14px; line-height: 1.4; display: none; }
+    .next-btn { width: 100%; margin-top: 16px; padding: 14px; border: none; border-radius: 14px; background: var(--accent); color: white; font-size: 16px; font-weight: 700; cursor: pointer; display: none; }
+    .next-btn:hover { background: var(--accent-hover); }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Шапка -->
+  <div class="header">
+    <div class="logo">ОГЭ Инфа ⚡</div>
+    <div class="stats">
+      <div class="badge">🔥 <span id="streak">1</span> дн.</div>
+      <div class="badge">⭐ <span id="xp">0</span> XP</div>
+    </div>
+  </div>
+
+  <!-- Экран 1: Меню -->
+  <div id="menu-screen" class="card">
+    <h2>Быстрая тренировка</h2>
+    <p>Выбери тему и реши 3 задачи за 2 минуты. Ошибки разберем сразу на месте.</p>
+    
+    <button class="topic-btn" onclick="startQuiz('all')">
+      <span>🎲 Микс заданий (№1, №3, №10)</span>
+      <span class="topic-tag">Старт</span>
+    </button>
+    <button class="topic-btn" onclick="startQuiz(1)">
+      <span>№1. Кодирование информации</span>
+      <span class="topic-tag">3 задачи</span>
+    </button>
+    <button class="topic-btn" onclick="startQuiz(3)">
+      <span>№3. Логические выражения</span>
+      <span class="topic-tag">3 задачи</span>
+    </button>
+    <button class="topic-btn" onclick="startQuiz(10)">
+      <span>№10. Системы счисления</span>
+      <span class="topic-tag">3 задачи</span>
+    </button>
+  </div>
+
+  <!-- Экран 2: Тренажер -->
+  <div id="quiz-screen" class="card hidden">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div class="task-num" id="task-num">Задание №1</div>
+    <div class="question-text" id="question-text">Текст вопроса</div>
+    <div class="options" id="options"></div>
+    <div class="explanation" id="explanation"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Дальше →</button>
+  </div>
+
+  <!-- Экран 3: Финал -->
+  <div id="result-screen" class="card hidden" style="text-align: center;">
+    <h2 style="font-size: 26px; margin-bottom: 10px;">Тренировка завершена! 🎉</h2>
+    <p id="result-text" style="font-size: 16px; color: var(--text);"></p>
+    <button class="next-btn" style="display: block;" onclick="goHome()">Вернуться к темам</button>
+  </div>
+</div>
+
+<script>
+  // База заданий (легко расширять)
+  const tasksDB = [
+    {
+      num: 1,
+      q: "В кодировке UTF-32 каждый символ кодируется 32 битами. Ученик написал текст:\n«Кит, кот, слон, жираф — звери».\nУченик вычеркнул из списка название одного животного, а также ставшие лишними запятую и пробел. При этом размер нового предложения оказался на 24 байта меньше. Какое слово вычеркнули?",
+      opts: ["Кит", "Кот", "Слон", "Жираф"],
+      ans: 2,
+      exp: "32 бита = 4 байта на символ. 24 байта / 4 = 6 символов удалено. Вычитаем запятую и пробел (2 символа) → слово состоит из 4 букв. Это «Слон»."
+    },
+    {
+      num: 1,
+      q: "В кодировке КОИ-8 каждый символ кодируется 8 битами. Определите информационный объем сообщения из 40 символов в байтах.",
+      opts: ["320 байт", "40 байт", "5 байт", "80 байт"],
+      ans: 1,
+      exp: "8 бит = 1 байт. Если 1 символ весит 1 байт, то 40 символов весят ровно 40 байт."
+    },
+    {
+      num: 1,
+      q: "Статья, набранная на компьютере, содержит 8 страниц, на каждой странице 40 строк, в каждой строке 48 символов. Определите размер статьи в Кбайтах в кодировке Windows-1251 (1 символ = 8 бит).",
+      opts: ["15 Кбайт", "120 Кбайт", "30 Кбайт", "16 Кбайт"],
+      ans: 0,
+      exp: "Считаем символы: 8 × 40 × 48 = 15 360 байт. Переводим в Кбайты: 15 360 / 1024 = 15 Кбайт."
+    },
+    {
+      num: 3,
+      q: "Напишите наименьшее целое число x, для которого истинно высказывание:\nНЕ (X < 7) И (X нечетное)",
+      opts: ["7", "8", "9", "5"],
+      ans: 0,
+      exp: "НЕ (X < 7) означает X ≥ 7. Наименьшее нечетное число, которое больше или равно 7 — это сама семерка (7)."
+    },
+    {
+      num: 3,
+      q: "Напишите наибольшее целое число x, для которого истинно высказывание:\nНЕ (X ≤ 10) И НЕ (X > 16)",
+      opts: ["15", "16", "10", "17"],
+      ans: 1,
+      exp: "Убираем «НЕ»: (X > 10) И (X ≤ 16). Наибольшее число в промежутке от 11 до 16 включительно — это 16."
+    },
+    {
+      num: 3,
+      q: "Для какого из приведённых чисел ложно высказывание:\nНЕ (число > 50) ИЛИ (число чётное)?",
+      opts: ["123", "56", "9", "8"],
+      ans: 0,
+      exp: "ИЛИ ложно, когда ложны обе части. Нам нужно число > 50 И при этом нечётное. Подходит только 123."
+    },
+    {
+      num: 10,
+      q: "Переведите двоичное число 101101 в десятичную систему счисления.",
+      opts: ["43", "45", "47", "53"],
+      ans: 1,
+      exp: "Расставляем степени двойки справа налево: 32 + 0 + 8 + 4 + 0 + 1 = 45."
+    },
+    {
+      num: 10,
+      q: "Сколько единиц в двоичной записи десятичного числа 63?",
+      opts: ["5", "6", "7", "4"],
+      ans: 1,
+      exp: "63 = 64 - 1 = 2⁶ - 1. В двоичной системе это шесть единиц подряд: 111111."
+    },
+    {
+      num: 10,
+      q: "Среди приведённых ниже трёх чисел, записанных в различных системах счисления, найдите максимальное:\n25₁₆, 45₈, 100011₂",
+      opts: ["25₁₆ (37)", "45₈ (37)", "100011₂ (35)", "Они все равны"],
+      ans: 0,
+      exp: "25₁₆ = 2×16 + 5 = 37. 45₈ = 4×8 + 5 = 37. 100011₂ = 32 + 2 + 1 = 35. (Оба первых числа равны 37, в ОГЭ нужно записать 37)."
+    }
+  ];
+
+  // Состояние приложения
+  let xp = Number(localStorage.getItem('oge_xp')) || 0;
+  let currentQuestions = [];
+  let currentIndex = 0;
+  let score = 0;
+
+  document.getElementById('xp').innerText = xp;
+
+  function startQuiz(topic) {
+    currentQuestions = topic === 'all' 
+      ? [...tasksDB].sort(() => Math.random() - 0.5).slice(0, 4)
+      : tasksDB.filter(t => t.num === topic);
+    
+    currentIndex = 0;
+    score = 0;
+
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('result-screen').classList.add('hidden');
+    document.getElementById('quiz-screen').classList.remove('hidden');
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    const q = currentQuestions[currentIndex];
+    document.getElementById('progress').style.width = `${(currentIndex / currentQuestions.length) * 100}%`;
+    document.getElementById('task-num').innerText = `Задание №${q.num} • Вопрос ${currentIndex + 1} из ${currentQuestions.length}`;
+    document.getElementById('question-text').innerText = q.q;
+    
+    const expEl = document.getElementById('explanation');
+    expEl.style.display = 'none';
+    expEl.innerText = q.exp;}
